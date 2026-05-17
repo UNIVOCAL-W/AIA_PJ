@@ -1,0 +1,5 @@
+data/
+*.zip
+*.pth
+*.pt
+big_video.mp4
