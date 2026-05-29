@@ -1,0 +1,13 @@
+{
+  "model_name": "gaussian_nb",
+  "feature_count": 27,
+  "n_train": 1334,
+  "n_test": 573,
+  "train_accuracy": 0.7736131934032984,
+  "test_accuracy": 0.7521815008726004,
+  "training_time_seconds": 0.0358121395111084,
+  "model_path": "C:\\AIA_workspace\\models\\classical\\gaussian_nb.joblib",
+  "prediction_path": "C:\\AIA_workspace\\data\\processed\\predictions\\classical\\gaussian_nb_predictions.csv",
+  "knn_k": null,
+  "standard_scaler": true
+}

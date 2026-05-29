@@ -1,0 +1,13 @@
+filename,image_id,label,scientific_name,common_name,model,y_true,y_pred,correct,confidence
+2402.jpg,2402,18,Cedrus deodara (Roxb.) G. Don,deodar,gaussian_nb,18,18,True,1.0
+1296.jpg,1296,6,Acer Palmatum,Japanese maple,gaussian_nb,6,6,True,1.0
+3519.jpg,3519,32,Liriodendron chinense (Hemsl.) Sarg.,Chinese tulip tree,gaussian_nb,32,32,True,1.0
+2418.jpg,2418,18,Cedrus deodara (Roxb.) G. Don,deodar,gaussian_nb,18,18,True,1.0
+2417.jpg,2417,18,Cedrus deodara (Roxb.) G. Don,deodar,gaussian_nb,18,18,True,1.0
+2671.jpg,2671,22,Podocarpus macrophyllus (Thunb.) Sweet,yew plum pine,gaussian_nb,22,22,True,1.0
+2195.jpg,2195,15,Cinnamomum camphora (L.) J. Presl,camphortree,gaussian_nb,15,15,True,1.0
+2669.jpg,2669,22,Podocarpus macrophyllus (Thunb.) Sweet,yew plum pine,gaussian_nb,22,22,True,1.0
+2667.jpg,2667,22,Podocarpus macrophyllus (Thunb.) Sweet,yew plum pine,gaussian_nb,22,22,True,1.0
+1322.jpg,1322,6,Acer Palmatum,Japanese maple,gaussian_nb,6,6,True,1.0
+1321.jpg,1321,6,Acer Palmatum,Japanese maple,gaussian_nb,6,6,True,1.0
+1314.jpg,1314,6,Acer Palmatum,Japanese maple,gaussian_nb,6,6,True,1.0

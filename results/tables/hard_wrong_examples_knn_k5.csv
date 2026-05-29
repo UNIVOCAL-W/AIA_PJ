@@ -1,0 +1,13 @@
+filename,image_id,label,scientific_name,common_name,model,y_true,y_pred,correct,confidence
+1025.jpg,1025,1,Phyllostachys edulis (Carr.) Houz.,pubescent bamboo,knn_k5,1,22,False,1.0
+1593.jpg,1593,3,Berberis anhweiensis Ahrendt,Anhui Barberry,knn_k5,3,25,False,1.0
+2668.jpg,2668,22,Podocarpus macrophyllus (Thunb.) Sweet,yew plum pine,knn_k5,22,1,False,1.0
+3223.jpg,3223,26,Prunus persica (L.) Batsch,peach,knn_k5,26,9,False,1.0
+3393.jpg,3393,30,Magnolia grandiflora L.,southern magnolia,knn_k5,30,12,False,0.8
+1024.jpg,1024,1,Phyllostachys edulis (Carr.) Houz.,pubescent bamboo,knn_k5,1,22,False,0.8
+3098.jpg,3098,24,Ligustrum lucidum Ait. f.,Glossy Privet,knn_k5,24,30,False,0.8
+1549.jpg,1549,9,Cinnamomum japonicum Sieb.,Chinese cinnamon,knn_k5,9,6,False,0.8
+3195.jpg,3195,26,Prunus persica (L.) Batsch,peach,knn_k5,26,7,False,0.8
+2108.jpg,2108,12,Pittosporum tobira (Thunb.) Ait. f.,Japanese cheesewood,knn_k5,12,30,False,0.8
+3228.jpg,3228,26,Prunus persica (L.) Batsch,peach,knn_k5,26,9,False,0.8
+2562.jpg,2562,21,Nerium oleander L.,oleander,knn_k5,21,22,False,0.8
