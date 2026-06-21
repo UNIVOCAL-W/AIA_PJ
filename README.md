@@ -1,37 +1,54 @@
 # AIA Topic A: Leaf Species Recognition
 
-本项目是 Automatic Image Analysis 课程 Topic A：Leaf Species Recognition。目标是使用 Flavia leaf dataset，通过经典形状特征和分类器完成 32 类叶片 species 分类。
+## 1. 项目介绍
 
-当前 classical pipeline 使用：
+本项目是 Automatic Image Analysis 课程 Topic A：Leaf Species Recognition。
 
-- binary leaf silhouette
-- ordered boundary points
-- Fourier descriptors
-- Hu moments
-- Gaussian Naive Bayes
-- k-NN
-- stratified train/test split
-- accuracy、per-class accuracy、confusion matrix 评估
+项目目标是使用 Flavia leaf dataset，对叶片图像进行 32 类 species classification。每张图像的类别由 Flavia 数据集的 image ID 范围确定，例如 `1001.jpg`、`1002.jpg` 等文件名会映射到对应的 leaf species label。
+
+本项目包含两条分类路线：
+
+```text
+Classical pipeline:
+binary leaf mask / contour
+-> Hu moments + Fourier descriptors
+-> Gaussian Naive Bayes / k-NN
+-> evaluation
+
+Modern pipeline:
+cropped leaf image
+-> frozen MobileNetV2 feature extractor
+-> Linear SVM classifier
+-> evaluation
+```
+
+Classical pipeline 主要用于传统形状特征 baseline；modern pipeline 用于比较 pretrained deep visual features 的表现。
 
 ---
 
-## 1. Project Structure
+## 2. 项目文件夹结构
 
-推荐项目文件夹结构如下：
+推荐项目结构如下：
 
 ```text
-C:\AIA_workspace\
+D:\AIA_workspace\
 │
 ├── README.md
+├── requirements.txt
 │
 ├── src\
 │   ├── preprocessing.py
+│   │
 │   ├── features_hu.py
 │   ├── features_fourier.py
 │   ├── build_features.py
 │   ├── split.py
 │   ├── train.py
-│   └── evaluate.py
+│   ├── evaluate.py
+│   │
+│   ├── split_modern.py
+│   ├── mobilenet_features.py
+│   └── train_mobilenet_svm.py
 │
 ├── data\
 │   ├── raw\
@@ -46,104 +63,191 @@ C:\AIA_workspace\
 │       │   ├── 1002_mask.png
 │       │   └── ...
 │       │
-│       ├── boundaries\
-│       │   ├── 1001_boundary.npy
-│       │   ├── 1002_boundary.npy
+│       ├── cropped\
+│       │   ├── 1001_crop.png
+│       │   ├── 1002_crop.png
 │       │   └── ...
 │       │
-│       ├── cropped_preview\
-│       │   └── 每个类别保存若干张裁剪预览图
+│       ├── contours\
+│       │   ├── 1001_contour.png
+│       │   ├── 1002_contour.png
+│       │   └── ...
 │       │
-│       ├── contours_preview\
-│       │   └── 每个类别保存若干张轮廓检测预览图
-│       │
-│       ├── features\
-│       │   ├── hu_moments_features.csv
-│       │   ├── fourier_features.csv
-│       │   ├── classical_features.csv
-│       │   ├── classical_feature_columns.txt
-│       │   └── build_features_summary.txt
+│       ├── preprocess_summary.csv
+│       ├── failed_files.txt
 │       │
 │       ├── splits\
 │       │   ├── split_70_30_seed0.csv
 │       │   ├── train_features_70_30_seed0.csv
 │       │   ├── test_features_70_30_seed0.csv
 │       │   ├── class_counts_70_30_seed0.csv
-│       │   └── split_summary_70_30_seed0.txt
+│       │   ├── split_summary_70_30_seed0.txt
+│       │   │
+│       │   ├── modern_split_70_30_seed0.csv
+│       │   ├── modern_train.csv
+│       │   ├── modern_test.csv
+│       │   └── modern_class_counts_70_30_seed0.csv
+│       │
+│       ├── features\
+│       │   ├── hu_moments_features.csv
+│       │   ├── fourier_features.csv
+│       │   ├── classical_features.csv
+│       │   ├── classical_feature_columns.txt
+│       │   ├── build_features_summary.txt
+│       │   │
+│       │   ├── mobilenet_train_features.csv
+│       │   └── mobilenet_test_features.csv
 │       │
 │       └── predictions\
-│           └── classical\
-│               ├── gaussian_nb_predictions.csv
-│               └── knn_k5_predictions.csv
+│           ├── classical\
+│           │   ├── gaussian_nb_predictions.csv
+│           │   └── knn_k5_predictions.csv
+│           │
+│           └── modern\
+│               └── mobilenet_svm_predictions.csv
 │
 ├── models\
-│   └── classical\
-│       ├── gaussian_nb.joblib
-│       ├── knn_k5.joblib
-│       ├── gaussian_nb_config.json
-│       └── knn_k5_config.json
+│   ├── classical\
+│   │   ├── gaussian_nb.joblib
+│   │   ├── knn_k5.joblib
+│   │   ├── gaussian_nb_config.json
+│   │   └── knn_k5_config.json
+│   │
+│   └── modern\
+│       ├── mobilenet_linear_svm.joblib
+│       └── mobilenet_linear_svm_config.json
 │
 └── results\
     ├── tables\
     │   ├── classical_training_summary.csv
     │   ├── classical_evaluation_summary.csv
+    │   ├── classification_report_gaussian_nb.csv
+    │   ├── classification_report_knn_k5.csv
+    │   ├── confusion_matrix_gaussian_nb.csv
+    │   ├── confusion_matrix_knn_k5.csv
+    │   ├── confusion_matrix_normalized_gaussian_nb.csv
+    │   ├── confusion_matrix_normalized_knn_k5.csv
     │   ├── per_class_accuracy_gaussian_nb.csv
     │   ├── per_class_accuracy_knn_k5.csv
-    │   ├── confusion_matrix_gaussian_nb.csv
-    │   └── confusion_matrix_knn_k5.csv
+    │   ├── easy_correct_examples_gaussian_nb.csv
+    │   ├── hard_wrong_examples_gaussian_nb.csv
+    │   ├── easy_correct_examples_knn_k5.csv
+    │   ├── hard_wrong_examples_knn_k5.csv
+    │   └── used_classical_feature_columns.txt
     │
-    └── figures\
-        ├── confusion_matrix_gaussian_nb.png
-        ├── confusion_matrix_knn_k5.png
-        ├── confusion_matrix_normalized_gaussian_nb.png
-        ├── confusion_matrix_normalized_knn_k5.png
-        ├── per_class_accuracy_gaussian_nb.png
-        ├── per_class_accuracy_knn_k5.png
-        ├── easy_correct_examples_gaussian_nb.png
-        ├── hard_wrong_examples_gaussian_nb.png
-        ├── easy_correct_examples_knn_k5.png
-        ├── hard_wrong_examples_knn_k5.png
-        └── overall_accuracy_comparison.png
+    ├── figures\
+    │   ├── confusion_matrix_gaussian_nb.png
+    │   ├── confusion_matrix_knn_k5.png
+    │   ├── confusion_matrix_normalized_gaussian_nb.png
+    │   ├── confusion_matrix_normalized_knn_k5.png
+    │   ├── per_class_accuracy_gaussian_nb.png
+    │   ├── per_class_accuracy_knn_k5.png
+    │   ├── easy_correct_examples_gaussian_nb.png
+    │   ├── hard_wrong_examples_gaussian_nb.png
+    │   ├── easy_correct_examples_knn_k5.png
+    │   ├── hard_wrong_examples_knn_k5.png
+    │   └── overall_accuracy_comparison.png
+    │
+    └── modern\
+        ├── tables\
+        │   ├── modern_training_summary.csv
+        │   ├── classification_report_mobilenet_svm.csv
+        │   ├── confusion_matrix_mobilenet_svm.csv
+        │   ├── confusion_matrix_normalized_mobilenet_svm.csv
+        │   ├── per_class_accuracy_mobilenet_svm.csv
+        │   ├── easy_correct_examples_mobilenet_svm.csv
+        │   └── hard_wrong_examples_mobilenet_svm.csv
+        │
+        └── figures\
+            ├── confusion_matrix_mobilenet_svm.png
+            ├── confusion_matrix_normalized_mobilenet_svm.png
+            ├── per_class_accuracy_mobilenet_svm.png
+            ├── overall_accuracy_mobilenet_svm.png
+            ├── easy_correct_examples_mobilenet_svm.png
+            └── hard_wrong_examples_mobilenet_svm.png
 ```
+
+说明：
+
+- `data/raw/Leaves/` 保存原始 Flavia leaf images。
+- `data/processed/` 保存 preprocessing、splits、features 和 predictions。
+- `models/classical/` 保存 classical models。
+- `models/modern/` 保存 modern Linear SVM model。
+- `results/tables/` 和 `results/figures/` 保存 classical pipeline 结果。
+- `results/modern/tables/` 和 `results/modern/figures/` 保存 modern pipeline 结果。
+- `data/` 被 `.gitignore` 忽略，因此 raw images 和中间 feature/prediction files 默认不会被 push。
 
 ---
 
-## 2. Environment Setup
+## 3. 环境设置
 
-建议使用独立 Python 环境：
+激活 virtual environment：
 
-```bash
-conda create -n aia python=3.11
-conda activate aia
-pip install numpy pandas matplotlib opencv-python scikit-learn tqdm joblib
+```powershell
+.\.venv\Scripts\Activate.ps1
 ```
 
-当前 classical pipeline 使用的是 `scikit-learn`，不需要 CUDA。CUDA 更适合后续 MobileNetV2 / PyTorch feature extraction 阶段。
+安装依赖：
 
----
+```powershell
+python -m pip install -r requirements.txt
+```
 
-## 3. Data Preparation
+如果需要使用 GPU 版本 PyTorch，可以使用 CUDA wheel index：
 
-原始 Flavia 数据集图片放在：
+```powershell
+python -m pip install torch torchvision --index-url https://download.pytorch.org/whl/cu121
+```
+
+检查 CUDA 是否可用：
+
+```powershell
+python -c "import torch; print(torch.__version__); print(torch.cuda.is_available()); print(torch.cuda.get_device_name(0) if torch.cuda.is_available() else 'CPU only')"
+```
+
+本项目当前环境中已验证：
 
 ```text
-C:\AIA_workspace\data\raw\Leaves
+torch 2.5.1+cu121
+CUDA available: True
+NVIDIA GeForce GTX 1050 Ti
 ```
 
-图片文件名示例：
+主要依赖包括：
 
 ```text
-1001.jpg
-1002.jpg
-...
-3621.jpg
+numpy
+pandas
+matplotlib
+opencv-python
+scikit-learn
+scipy
+tqdm
+joblib
+torch
+torchvision
+pillow
 ```
-
-项目中使用图片编号范围生成 32 个 species label。每张图片通过 `image_id` 与 label 和特征表对齐。
 
 ---
 
-## 4. Pipeline Overview
+## 4. Classical Pipeline 及运行方式
+
+Classical pipeline 使用手工设计的 shape descriptors 进行分类。
+
+整体流程：
+
+```text
+raw leaf image
+-> preprocessing
+-> binary mask / contour
+-> Hu moments
+-> Fourier descriptors
+-> feature concatenation
+-> stratified 70/30 train/test split
+-> Gaussian Naive Bayes / k-NN
+-> evaluation
+```
 
 ### Step 1: Preprocessing
 
@@ -155,33 +259,30 @@ src/preprocessing.py
 
 功能：
 
-- 读取原始 leaf image
-- 转灰度图
-- Otsu 二值化
-- morphology open / close 去噪和补洞
+- 读取 `data/raw/Leaves/` 中的 raw leaf images
+- 使用 Otsu threshold 分割叶片
+- 使用 morphology open / close 去噪和补洞
 - 提取最大外部轮廓
-- 保存 binary mask
-- 保存 ordered boundary points
-- 每个类别保存若干张 crop 和 contour preview
-- 保存 `preprocess_summary.csv`
+- 保存 binary masks
+- 保存 cropped leaf images
+- 保存 contour checking images
+- 保存 preprocessing summary
 
 运行：
 
-```bash
-python C:\AIA_workspace\src\preprocessing.py
+```powershell
+python src\preprocessing.py
 ```
 
 输出：
 
 ```text
 data/processed/masks/
-data/processed/boundaries/
-data/processed/cropped_preview/
-data/processed/contours_preview/
+data/processed/cropped/
+data/processed/contours/
 data/processed/preprocess_summary.csv
+data/processed/failed_files.txt
 ```
-
----
 
 ### Step 2: Hu Moments Feature Extraction
 
@@ -193,15 +294,15 @@ src/features_hu.py
 
 功能：
 
-- 读取 `masks/`
+- 读取 `data/processed/masks/`
 - 对每张 binary leaf mask 计算 7 个 Hu moments
 - 使用 log transform 稳定数值范围
 - 保存 Hu moments feature table
 
 运行：
 
-```bash
-python C:\AIA_workspace\src\features_hu.py
+```powershell
+python src\features_hu.py
 ```
 
 输出：
@@ -209,8 +310,6 @@ python C:\AIA_workspace\src\features_hu.py
 ```text
 data/processed/features/hu_moments_features.csv
 ```
-
----
 
 ### Step 3: Fourier Descriptors Feature Extraction
 
@@ -222,20 +321,19 @@ src/features_fourier.py
 
 功能：
 
-- 读取 `boundaries/` 中的 ordered boundary points
+- 从 leaf mask 或 boundary 中提取叶片边界
 - 统一边界方向
 - 对齐起始点
 - 重采样到固定长度
 - 中心化到 centroid
 - 尺度归一化
-- 将边界表示为 complex signal: `z = x + i y`
 - 使用 FFT 计算 Fourier descriptors
 - 保留 low-frequency coefficients
 
 运行：
 
-```bash
-python C:\AIA_workspace\src\features_fourier.py --num-descriptors 20
+```powershell
+python src\features_fourier.py --num-descriptors 20
 ```
 
 输出：
@@ -243,8 +341,6 @@ python C:\AIA_workspace\src\features_fourier.py --num-descriptors 20
 ```text
 data/processed/features/fourier_features.csv
 ```
-
----
 
 ### Step 4: Build Classical Feature Table
 
@@ -259,18 +355,12 @@ src/build_features.py
 - 读取 `hu_moments_features.csv`
 - 读取 `fourier_features.csv`
 - 按 `image_id` 合并
-- 拼接成每张叶子的 classical feature vector
-
-当前特征维度：
-
-```text
-7 Hu moments + 20 Fourier descriptors = 27 features
-```
+- 得到 classical feature vector
 
 运行：
 
-```bash
-python C:\AIA_workspace\src\build_features.py
+```powershell
+python src\build_features.py
 ```
 
 输出：
@@ -281,29 +371,25 @@ data/processed/features/classical_feature_columns.txt
 data/processed/features/build_features_summary.txt
 ```
 
----
-
 ### Step 5: Train/Test Split
 
 脚本：
 
 ```text
-src/split_data.py
+src/split.py
 ```
 
 功能：
 
 - 读取 `classical_features.csv`
-- 使用 `train_test_split`
+- 使用 stratified train/test split
 - `test_size = 0.3`
-- `stratify = label`
 - `random_state = 0`
-- 保存固定 train/test split
 
 运行：
 
-```bash
-python C:\AIA_workspace\src\split_data.py
+```powershell
+python src\split.py
 ```
 
 输出：
@@ -316,42 +402,32 @@ data/processed/splits/class_counts_70_30_seed0.csv
 data/processed/splits/split_summary_70_30_seed0.txt
 ```
 
-说明：
-
-- 任务仍然是 32 类分类
-- train/test 是两个数据集合，不是二分类
-- stratified split 保证每个类别在 train/test 中比例接近
-- seed0 保证实验可复现
-
----
-
 ### Step 6: Train Classical Models
 
 脚本：
 
 ```text
-src/train_classical.py
+src/train.py
 ```
 
 功能：
 
 - 读取 train/test feature CSV
-- 使用 `classical_feature_columns.txt` 确定训练特征列
+- 使用 `classical_feature_columns.txt` 确定特征列
 - 训练 Gaussian Naive Bayes
 - 训练 k-NN，默认 `k = 5`
-- 保存模型和 prediction CSV
-- 使用 tqdm 显示训练进度
+- 保存 model 和 prediction CSV
 
 运行：
 
-```bash
-python C:\AIA_workspace\src\train_classical.py
+```powershell
+python src\train.py
 ```
 
-或指定 k 值：
+如果需要改变 k 值：
 
-```bash
-python C:\AIA_workspace\src\train_classical.py --knn-k 3
+```powershell
+python src\train.py --knn-k 3
 ```
 
 输出：
@@ -364,15 +440,7 @@ data/processed/predictions/classical/knn_k5_predictions.csv
 results/tables/classical_training_summary.csv
 ```
 
-说明：
-
-- `.joblib` 是 scikit-learn 模型保存格式
-- 不是 `.pth`，因为当前模型不是 PyTorch neural network
-- GaussianNB 和 k-NN 没有 epoch，也没有 deep learning loss curve
-
----
-
-### Step 7: Evaluation and Visualization
+### Step 7: Classical Evaluation
 
 脚本：
 
@@ -382,124 +450,282 @@ src/evaluate.py
 
 功能：
 
-- 读取 prediction CSV
+- 读取 classical prediction CSV
 - 计算 overall accuracy
 - 计算 per-class accuracy
 - 保存 classification report
-- 保存 confusion matrix
-- 绘制 confusion matrix
-- 绘制 normalized confusion matrix
-- 绘制 per-class accuracy bar plot
-- 绘制 overall accuracy comparison
-- 可视化 easy correct examples
-- 可视化 hard wrong examples
-- 使用 tqdm 显示评估和绘图进度
+- 保存 confusion matrix 和 normalized confusion matrix
+- 绘制 per-class accuracy plot
+- 绘制 overall accuracy comparison plot
+- 保存 easy correct examples 和 hard wrong examples
 
 运行：
 
-```bash
-python C:\AIA_workspace\src\evaluate.py
+```powershell
+python src\evaluate.py
 ```
 
 输出：
 
 ```text
-results/tables/classical_evaluation_summary.csv
-results/tables/per_class_accuracy_gaussian_nb.csv
-results/tables/per_class_accuracy_knn_k5.csv
-results/tables/confusion_matrix_gaussian_nb.csv
-results/tables/confusion_matrix_knn_k5.csv
-results/figures/confusion_matrix_gaussian_nb.png
-results/figures/confusion_matrix_knn_k5.png
-results/figures/per_class_accuracy_gaussian_nb.png
-results/figures/per_class_accuracy_knn_k5.png
-results/figures/overall_accuracy_comparison.png
+results/tables/
+results/figures/
 ```
 
----
+Classical pipeline 完整运行顺序：
 
-## 5. Recommended Running Order
-
-完整 classical pipeline 运行顺序：
-
-```bash
-python C:\AIA_workspace\src\preprocessing.py
-python C:\AIA_workspace\src\features_hu.py
-python C:\AIA_workspace\src\features_fourier.py --num-descriptors 20
-python C:\AIA_workspace\src\build_features.py
-python C:\AIA_workspace\src\split_data.py
-python C:\AIA_workspace\src\train_classical.py
-python C:\AIA_workspace\src\evaluate.py
+```powershell
+python src\preprocessing.py
+python src\features_hu.py
+python src\features_fourier.py --num-descriptors 20
+python src\build_features.py
+python src\split.py
+python src\train.py
+python src\evaluate.py
 ```
 
----
-
-## 6. Current Project Status
-
-已完成：
-
-- Flavia 数据集准备
-- label 映射表生成
-- silhouette segmentation
-- binary mask 保存
-- ordered boundary points 保存
-- Hu moments feature extraction
-- Fourier descriptors feature extraction
-- Hu + Fourier feature concatenation
-- stratified train/test split 方案
-- Gaussian Naive Bayes / k-NN 训练脚本
-- evaluation + visualization 脚本
-
-待完成：
-
-- 运行 `train_classical.py` 并记录结果
-- 运行 `evaluate.py` 并分析结果
-- 在报告中解释 confusion matrix 和 per-class accuracy
-- 分析 easy / hard examples
-- 后续完成 modern comparison：MobileNetV2 frozen features + Linear SVM
-
----
-
-## 7. Notes for Report
-
-报告中可以重点说明：
-
-- 本任务是 32 类 leaf species classification
-- classical features 只使用 shape，不使用颜色或纹理
-- Hu moments 描述叶片区域的整体几何分布
-- Fourier descriptors 描述叶片边界形状
-- 使用 stratified 70/30 train/test split
-- 所有模型使用同一个 split 进行公平比较
-- k-NN 对特征尺度敏感，因此训练时需要使用 scaler
-- GaussianNB 假设特征条件独立，这可能不完全符合 Hu + Fourier 特征
-- confusion matrix 可以显示哪些 species 容易混淆
-- hard examples 可以说明只用 shape descriptor 的局限性
-
----
-
-## 8. Modern Comparison Plan
-
-后续 modern baseline 可以加入：
+当前已有 classical baseline 结果：
 
 ```text
-MobileNetV2 frozen features + Linear SVM
+GaussianNB test accuracy: 0.7522
+k-NN k=5 test accuracy: 0.7190
 ```
 
-建议新增文件：
+---
+
+## 5. Modern Pipeline 及运行方式
+
+Modern pipeline 使用 pretrained MobileNetV2 提取图像特征，然后使用 linear SVM style classifier 进行分类。
+
+整体流程：
+
+```text
+raw leaf image
+-> preprocessing
+-> cropped leaf image
+-> resize to 224 x 224
+-> frozen MobileNetV2 feature extractor
+-> 1280-dimensional feature vector
+-> linear SVM classifier
+-> evaluation
+```
+
+说明：
+
+- MobileNetV2 使用 pretrained weights。
+- MobileNetV2 是 frozen feature extractor，不进行 fine-tuning。
+- 每张 cropped leaf image 会被转换为 1280 维 feature vector。
+- 分类器使用 scikit-learn 的 `SGDClassifier(loss="hinge")`。
+- `SGDClassifier(loss="hinge")` 是 linear SVM style classifier，比 `LinearSVC` 在本项目中训练更快。
+- batch size 主要影响速度和 GPU memory，不应该明显影响分类结果。
+
+### Step 1: Preprocessing
+
+如果还没有运行 preprocessing，先运行：
+
+```powershell
+python src\preprocessing.py
+```
+
+modern pipeline 主要使用：
+
+```text
+data/processed/cropped/
+```
+
+### Step 2: Modern Train/Test Split
+
+脚本：
+
+```text
+src/split_modern.py
+```
+
+功能：
+
+- 读取 `data/processed/cropped/`
+- 从文件名提取 image ID
+- 根据 Flavia image ID 范围生成 label
+- 创建 stratified 70/30 split
+- `random_state = 0`
+
+运行：
+
+```powershell
+python src\split_modern.py
+```
+
+输出：
+
+```text
+data/processed/splits/modern_train.csv
+data/processed/splits/modern_test.csv
+data/processed/splits/modern_split_70_30_seed0.csv
+data/processed/splits/modern_class_counts_70_30_seed0.csv
+```
+
+当前 split：
+
+```text
+training samples: 1334
+test samples: 573
+classes: 32
+```
+
+### Step 3: MobileNetV2 Feature Extraction
+
+脚本：
 
 ```text
 src/mobilenet_features.py
+```
+
+功能：
+
+- 读取 modern train/test CSV
+- 加载 cropped leaf images
+- resize 到 `224 x 224`
+- 使用 pretrained MobileNetV2 提取 frozen features
+- 保存 train/test feature CSV
+
+使用 GPU 运行：
+
+```powershell
+python src\mobilenet_features.py --device cuda --batch-size 8
+```
+
+如果 CUDA out of memory，降低 batch size：
+
+```powershell
+python src\mobilenet_features.py --device cuda --batch-size 4
+```
+
+如果需要 CPU：
+
+```powershell
+python src\mobilenet_features.py --device cpu --batch-size 8
+```
+
+输出：
+
+```text
+data/processed/features/mobilenet_train_features.csv
+data/processed/features/mobilenet_test_features.csv
+```
+
+### Step 4: Train Linear SVM and Evaluate
+
+脚本：
+
+```text
 src/train_mobilenet_svm.py
 ```
 
-流程：
+功能：
+
+- 读取 MobileNetV2 feature CSV
+- 使用 `StandardScaler`
+- 训练 hinge-loss linear SVM classifier
+- 保存 trained model
+- 保存 prediction CSV
+- 保存 summary、classification report、confusion matrix、per-class accuracy
+- 保存 easy correct examples 和 hard wrong examples
+
+运行：
+
+```powershell
+python src\train_mobilenet_svm.py
+```
+
+模型输出：
 
 ```text
-cropped leaf image
-→ resize to 224 x 224
-→ MobileNetV2 frozen feature extractor
-→ feature vector
-→ Linear SVM
-→ same train/test split
-→ compare with classical baseline
+models/modern/mobilenet_linear_svm.joblib
+models/modern/mobilenet_linear_svm_config.json
 ```
+
+预测输出：
+
+```text
+data/processed/predictions/modern/mobilenet_svm_predictions.csv
+```
+
+Modern result tables：
+
+```text
+results/modern/tables/modern_training_summary.csv
+results/modern/tables/classification_report_mobilenet_svm.csv
+results/modern/tables/confusion_matrix_mobilenet_svm.csv
+results/modern/tables/confusion_matrix_normalized_mobilenet_svm.csv
+results/modern/tables/per_class_accuracy_mobilenet_svm.csv
+results/modern/tables/easy_correct_examples_mobilenet_svm.csv
+results/modern/tables/hard_wrong_examples_mobilenet_svm.csv
+```
+
+Modern result figures：
+
+```text
+results/modern/figures/confusion_matrix_mobilenet_svm.png
+results/modern/figures/confusion_matrix_normalized_mobilenet_svm.png
+results/modern/figures/per_class_accuracy_mobilenet_svm.png
+results/modern/figures/overall_accuracy_mobilenet_svm.png
+results/modern/figures/easy_correct_examples_mobilenet_svm.png
+results/modern/figures/hard_wrong_examples_mobilenet_svm.png
+```
+
+Modern pipeline 完整运行顺序：
+
+```powershell
+python src\preprocessing.py
+python src\split_modern.py
+python src\mobilenet_features.py --device cuda --batch-size 8
+python src\train_mobilenet_svm.py
+```
+
+如果 preprocessing 和 split 已经完成，则只需要运行：
+
+```powershell
+python src\mobilenet_features.py --device cuda --batch-size 8
+python src\train_mobilenet_svm.py
+```
+
+当前 modern pipeline 结果：
+
+```text
+train accuracy: 1.0000
+test accuracy: 0.9895
+```
+
+---
+
+## 6. Report Notes
+
+### Classical Pipeline 报告要点
+
+- 本任务是 32 类 leaf species classification。
+- Classical pipeline 只使用 shape information，不使用 deep learning features。
+- Hu moments 描述叶片区域的整体几何分布。
+- Fourier descriptors 描述叶片边界形状。
+- Classical feature vector 当前由 7 个 Hu moments 和 20 个 Fourier descriptors 组成，共 27 维。
+- 使用 stratified 70/30 train/test split。
+- 当前 classical baseline 使用 `random_state = 0`。
+- GaussianNB 假设特征之间条件独立，这个假设对 Hu + Fourier descriptors 不一定完全成立。
+- k-NN 对特征尺度敏感，因此训练时需要 standard scaler。
+- k-NN 当前保存结果使用 `k = 5`。
+- confusion matrix 可以显示哪些 species 容易混淆。
+- easy correct / hard wrong examples 可以帮助解释 shape descriptor 的局限性。
+
+### Modern Pipeline 报告要点
+
+- Modern pipeline 使用 pretrained MobileNetV2 作为 frozen feature extractor。
+- MobileNetV2 没有进行 fine-tuning，因此训练成本较低，结果也更容易复现。
+- 每张 cropped leaf image 被 resize 到 `224 x 224`。
+- MobileNetV2 为每张图生成 1280 维 feature vector。
+- 最终分类器是 hinge-loss linear SVM classifier。
+- Modern pipeline 和 classical pipeline 使用相同思想的 stratified 70/30 split。
+- 当前 modern split 使用 `random_state = 0`。
+- Modern result 明显高于 classical baseline，说明 pretrained deep visual features 对该数据集更有效。
+- 当前 modern test accuracy 很高，应说明这是在 clean Flavia dataset 和 stratified random split 上得到的结果。
+- 高准确率不一定代表对真实复杂场景完全泛化，因为 Flavia 图像背景较干净、叶片居中且类别内图像可能相似。
+- 如果需要更严格验证，可以尝试 multiple random seeds 或 stratified cross-validation。
+- batch size 只影响 MobileNetV2 feature extraction 的速度和 GPU memory，不应该明显改变最终结果。

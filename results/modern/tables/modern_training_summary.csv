@@ -1,0 +1,2 @@
+model,feature_count,n_train,n_test,train_accuracy,test_accuracy,training_time_seconds,model_path,prediction_path
+mobilenet_v2_linear_svm_sgd,1280,1334,573,1.0,0.9895287958115183,2.0726206302642822,D:\AIA_workspace\models\modern\mobilenet_linear_svm.joblib,D:\AIA_workspace\data\processed\predictions\modern\mobilenet_svm_predictions.csv

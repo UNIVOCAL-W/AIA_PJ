@@ -1,0 +1,9 @@
+{
+  "model": "MobileNetV2 frozen features + linear SVM trained with SGDClassifier hinge loss",
+  "feature_count": 1280,
+  "loss": "hinge",
+  "alpha": 0.0001,
+  "tol": 0.001,
+  "max_iter": 2000,
+  "random_state": 0
+}

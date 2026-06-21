@@ -8,8 +8,9 @@ import csv
 # 1. 路径设置
 # =========================
 
-input_dir = Path(r"C:\AIA_workspace\data\raw\Leaves")
-output_dir = Path(r"C:\AIA_workspace\data\processed")
+workspace_dir = Path(__file__).resolve().parents[1]
+input_dir = workspace_dir / "data" / "raw" / "Leaves"
+output_dir = workspace_dir / "data" / "processed"
 
 mask_dir = output_dir / "masks"
 crop_dir = output_dir / "cropped"

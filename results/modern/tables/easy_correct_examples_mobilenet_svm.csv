@@ -1,0 +1,13 @@
+image_id,filename,label,prediction,correct,crop_path
+1002,1002.jpg,1,1,True,D:\AIA_workspace\data\processed\cropped\1002_crop.png
+1007,1007.jpg,1,1,True,D:\AIA_workspace\data\processed\cropped\1007_crop.png
+1013,1013.jpg,1,1,True,D:\AIA_workspace\data\processed\cropped\1013_crop.png
+1014,1014.jpg,1,1,True,D:\AIA_workspace\data\processed\cropped\1014_crop.png
+1018,1018.jpg,1,1,True,D:\AIA_workspace\data\processed\cropped\1018_crop.png
+1022,1022.jpg,1,1,True,D:\AIA_workspace\data\processed\cropped\1022_crop.png
+1024,1024.jpg,1,1,True,D:\AIA_workspace\data\processed\cropped\1024_crop.png
+1025,1025.jpg,1,1,True,D:\AIA_workspace\data\processed\cropped\1025_crop.png
+1026,1026.jpg,1,1,True,D:\AIA_workspace\data\processed\cropped\1026_crop.png
+1037,1037.jpg,1,1,True,D:\AIA_workspace\data\processed\cropped\1037_crop.png
+1038,1038.jpg,1,1,True,D:\AIA_workspace\data\processed\cropped\1038_crop.png
+1039,1039.jpg,1,1,True,D:\AIA_workspace\data\processed\cropped\1039_crop.png
