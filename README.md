@@ -666,6 +666,117 @@ train accuracy: 1.0000
 test accuracy: 0.9895
 ```
 
+### Step 5: Modern Pipeline 额外验证
+
+为了检查 `0.9895` 的 test accuracy 是否只是某一次 split 的偶然结果，本项目额外加入了 two validation scripts。
+
+#### Multi-seed Validation
+
+脚本：
+
+```text
+src/validate_modern_seeds.py
+```
+
+功能：
+
+- 使用已经提取好的 MobileNetV2 feature CSV
+- 将 train/test features 合并回完整 feature table
+- 使用不同 random seed 重新做 stratified 70/30 split
+- 每个 seed 重新训练 linear SVM classifier
+- 比较不同 seed 下的 test accuracy
+- 不覆盖原本的 `results/modern/` 和 `models/modern/`
+
+运行：
+
+```powershell
+python src\validate_modern_seeds.py --seeds 0 1 2 3 4
+```
+
+输出：
+
+```text
+results/modern_validation/seeds/seed_validation_summary.csv
+results/modern_validation/seeds/seed_validation_aggregate.csv
+results/modern_validation/seeds/seed_0/
+results/modern_validation/seeds/seed_1/
+results/modern_validation/seeds/seed_2/
+results/modern_validation/seeds/seed_3/
+results/modern_validation/seeds/seed_4/
+```
+
+当前 multi-seed validation 结果：
+
+```text
+seed 0: 0.9913
+seed 1: 0.9756
+seed 2: 0.9825
+seed 3: 0.9895
+seed 4: 0.9843
+
+mean test accuracy: 0.9846
+std test accuracy: 0.0062
+min test accuracy: 0.9756
+max test accuracy: 0.9913
+```
+
+#### Stratified 5-Fold Cross-Validation
+
+脚本：
+
+```text
+src/cross_validate_modern.py
+```
+
+功能：
+
+- 使用完整 MobileNetV2 feature table
+- 使用 `StratifiedKFold`
+- 每个 fold 重新训练 linear SVM classifier
+- 计算每个 fold 的 test accuracy
+- 汇总 mean / std / min / max accuracy
+- 不覆盖原本的 `results/modern/` 和 `models/modern/`
+
+运行：
+
+```powershell
+python src\cross_validate_modern.py --folds 5 --seed 0
+```
+
+输出：
+
+```text
+results/modern_validation/cross_validation/cross_validation_summary.csv
+results/modern_validation/cross_validation/cross_validation_aggregate.csv
+results/modern_validation/cross_validation/fold_1/
+results/modern_validation/cross_validation/fold_2/
+results/modern_validation/cross_validation/fold_3/
+results/modern_validation/cross_validation/fold_4/
+results/modern_validation/cross_validation/fold_5/
+```
+
+当前 5-fold cross-validation 结果：
+
+```text
+fold 1: 0.9869
+fold 2: 0.9738
+fold 3: 0.9843
+fold 4: 0.9869
+fold 5: 0.9816
+
+mean test accuracy: 0.9827
+std test accuracy: 0.0054
+min test accuracy: 0.9738
+max test accuracy: 0.9869
+```
+
+验证结论：
+
+```text
+modern pipeline 的准确率在不同 random seeds 和 5-fold cross-validation 下都保持在约 97% 到 99%。
+因此，原本 seed 0 split 上的 0.9895 test accuracy 不是明显的偶然结果。
+```
+
 ---
 
 ## 6. Report Notes
@@ -696,6 +807,8 @@ test accuracy: 0.9895
 - 当前 modern split 使用 `random_state = 0`。
 - Modern result 明显高于 classical baseline，说明 pretrained deep visual features 对该数据集更有效。
 - 当前 modern test accuracy 很高，应说明这是在 clean Flavia dataset 和 stratified random split 上得到的结果。
+- Multi-seed validation 的 mean test accuracy 为 `0.9846`，说明结果在不同 random splits 下较稳定。
+- 5-fold stratified cross-validation 的 mean test accuracy 为 `0.9827`，进一步支持 modern pipeline 的稳定性。
 - 高准确率不一定代表对真实复杂场景完全泛化，因为 Flavia 图像背景较干净、叶片居中且类别内图像可能相似。
 - 如果需要更严格验证，可以尝试 multiple random seeds 或 stratified cross-validation。
 - batch size 只影响 MobileNetV2 feature extraction 的速度和 GPU memory，不应该明显改变最终结果。
