@@ -181,12 +181,6 @@ D:\AIA_workspace\
 
 ## 3. 环境设置
 
-激活 virtual environment：
-
-```powershell
-.\.venv\Scripts\Activate.ps1
-```
-
 安装依赖：
 
 ```powershell
@@ -203,30 +197,6 @@ python -m pip install torch torchvision --index-url https://download.pytorch.org
 
 ```powershell
 python -c "import torch; print(torch.__version__); print(torch.cuda.is_available()); print(torch.cuda.get_device_name(0) if torch.cuda.is_available() else 'CPU only')"
-```
-
-本项目当前环境中已验证：
-
-```text
-torch 2.5.1+cu121
-CUDA available: True
-NVIDIA GeForce GTX 1050 Ti
-```
-
-主要依赖包括：
-
-```text
-numpy
-pandas
-matplotlib
-opencv-python
-scikit-learn
-scipy
-tqdm
-joblib
-torch
-torchvision
-pillow
 ```
 
 ---
