@@ -1,4 +1,7 @@
 data/
+results/
+outputs/
+tools/
 .venv/
 .matplotlib/
 __pycache__/
