@@ -1,13 +1,8 @@
-import sys
 from pathlib import Path
 
 import pandas as pd
 from sklearn.model_selection import train_test_split
 
-
-if hasattr(sys.stdout, "reconfigure"):
-    sys.stdout.reconfigure(encoding="utf-8")
-    sys.stderr.reconfigure(encoding="utf-8")
 
 WORKSPACE_DIR = Path(__file__).resolve().parents[1]
 CROPPED_DIR = WORKSPACE_DIR / "data" / "processed" / "cropped"

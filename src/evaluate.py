@@ -39,14 +39,10 @@ from sklearn.metrics import (
 )
 
 
-# =========================
-# 1. Basic utilities
-# =========================
-
 def find_prediction_files(predictions_dir: Path):
     files = sorted(predictions_dir.glob("*_predictions.csv"))
 
-    if len(files) == 0:
+    if not files:
         raise FileNotFoundError(
             f"No prediction files found in: {predictions_dir}\n"
             "Expected files like gaussian_nb_predictions.csv or knn_k5_predictions.csv"
@@ -56,8 +52,7 @@ def find_prediction_files(predictions_dir: Path):
 
 
 def get_model_name(prediction_path: Path) -> str:
-    name = prediction_path.stem
-    return name.replace("_predictions", "")
+    return prediction_path.stem.replace("_predictions", "")
 
 
 def find_column(df: pd.DataFrame, candidates):
@@ -120,15 +115,10 @@ def get_confidence_column(df: pd.DataFrame):
     If not available, return None.
     """
 
-    candidates = [
-        "confidence",
-        "max_probability",
-        "pred_probability",
-        "probability",
-        "score",
-    ]
-
-    return find_column(df, candidates)
+    return find_column(
+        df,
+        ["confidence", "max_probability", "pred_probability", "probability", "score"],
+    )
 
 
 def get_labels_sorted(y_true, y_pred):
@@ -136,17 +126,13 @@ def get_labels_sorted(y_true, y_pred):
     return labels
 
 
-# =========================
-# 2. Metric computation
-# =========================
-
 def compute_per_class_accuracy(df: pd.DataFrame) -> pd.DataFrame:
     records = []
 
     for label, group in df.groupby("y_true"):
         total = len(group)
         correct = int((group["y_true"] == group["y_pred"]).sum())
-        acc = correct / total if total > 0 else 0.0
+        acc = correct / total
 
         records.append({
             "label": label,
@@ -239,10 +225,6 @@ def evaluate_one_model(prediction_path: Path, tables_dir: Path, figures_dir: Pat
     }, df
 
 
-# =========================
-# 3. Plotting metrics
-# =========================
-
 def plot_confusion_matrix(cm, labels, output_path: Path, title: str, normalized: bool):
     plt.figure(figsize=(12, 10))
 
@@ -298,17 +280,13 @@ def plot_overall_accuracy(summary_df: pd.DataFrame, output_path: Path):
     plt.close()
 
 
-# =========================
-# 4. Easy / hard examples
-# =========================
-
 def load_image(image_dir: Path, filename: str):
     path = image_dir / filename
 
     if not path.exists():
         image_id = Path(filename).stem
         candidates = list(image_dir.rglob(f"{image_id}.*"))
-        if len(candidates) == 0:
+        if not candidates:
             return None
         path = candidates[0]
 
@@ -411,10 +389,6 @@ def save_easy_hard_examples(
         max_examples=max_examples,
     )
 
-
-# =========================
-# 5. Main
-# =========================
 
 def parse_args():
     parser = argparse.ArgumentParser(

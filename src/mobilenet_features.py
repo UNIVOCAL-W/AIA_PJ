@@ -1,5 +1,4 @@
 import argparse
-import sys
 from pathlib import Path
 
 import numpy as np
@@ -7,13 +6,9 @@ import pandas as pd
 import torch
 from PIL import Image
 from torch.utils.data import DataLoader, Dataset
-from torchvision import models, transforms
+from torchvision import models
 from tqdm import tqdm
 
-
-if hasattr(sys.stdout, "reconfigure"):
-    sys.stdout.reconfigure(encoding="utf-8")
-    sys.stderr.reconfigure(encoding="utf-8")
 
 WORKSPACE_DIR = Path(__file__).resolve().parents[1]
 SPLIT_DIR = WORKSPACE_DIR / "data" / "processed" / "splits"
@@ -75,8 +70,9 @@ def extract_features(csv_path: Path, output_path: Path, device: torch.device, ba
                     "label": int(batch["label"][i]),
                 }
 
-                for feature_index, value in enumerate(feature_values):
-                    row[f"feat_{feature_index}"] = float(value)
+                row.update(
+                    {f"feat_{index}": float(value) for index, value in enumerate(feature_values)}
+                )
 
                 rows.append(row)
 

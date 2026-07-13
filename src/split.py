@@ -24,12 +24,8 @@ import pandas as pd
 from sklearn.model_selection import train_test_split
 
 
-DEFAULT_FEATURES_CSV = Path(
-    r"C:\AIA_workspace\data\processed\features\classical_features.csv"
-)
-DEFAULT_OUTPUT_DIR = Path(
-    r"C:\AIA_workspace\data\processed\splits"
-)
+DEFAULT_FEATURES_CSV = Path(r"C:\AIA_workspace\data\processed\features\classical_features.csv")
+DEFAULT_OUTPUT_DIR = Path(r"C:\AIA_workspace\data\processed\splits")
 
 
 def read_features(features_csv: Path) -> pd.DataFrame:
@@ -147,7 +143,7 @@ def save_outputs(
 
     feature_columns = [
         col for col in split_df.columns
-        if col.startswith("hu_") or col.startswith("fd_") or col.startswith("fourier_")
+        if col.startswith(("hu_", "fd_", "fourier_"))
     ]
 
     summary_lines = [

@@ -1,5 +1,3 @@
-
-
 """
 build_features.py
 
@@ -7,30 +5,23 @@ Merge Hu moments features and Fourier descriptor features into one classical
 feature table for Topic A: Leaf Species Recognition.
 
 Expected input files by default:
-    C:\AIA_workspace\data\processed\features\hu_moments_features.csv
-    C:\AIA_workspace\data\processed\features\fourier_features.csv
+    C:/AIA_workspace/data/processed/features/hu_moments_features.csv
+    C:/AIA_workspace/data/processed/features/fourier_features.csv
 
 Output files by default:
-    C:\AIA_workspace\data\processed\features\classical_features.csv
-    C:\AIA_workspace\data\processed\features\classical_feature_columns.txt
-    C:\AIA_workspace\data\processed\features\build_features_summary.txt
+    C:/AIA_workspace/data/processed/features/classical_features.csv
+    C:/AIA_workspace/data/processed/features/classical_feature_columns.txt
+    C:/AIA_workspace/data/processed/features/build_features_summary.txt
 
 This script does NOT standardize/normalize the feature values. Scaling should be
 fit only on the training split later to avoid data leakage, especially for k-NN.
 """
 
-from __future__ import annotations
-
 import argparse
 from pathlib import Path
-from typing import Iterable
 
 import pandas as pd
 
-
-# =========================
-# 1. Helper functions
-# =========================
 
 def read_csv_checked(path: Path, name: str) -> pd.DataFrame:
     """Read a CSV file and raise a clear error if it does not exist."""
@@ -79,7 +70,7 @@ def normalize_image_id_column(df: pd.DataFrame, table_name: str) -> pd.DataFrame
 
 def find_feature_columns(
     df: pd.DataFrame,
-    prefixes: Iterable[str],
+    prefixes: tuple[str, ...],
     exclude_columns: set[str],
 ) -> list[str]:
     """Find numeric feature columns by prefix."""
@@ -128,12 +119,10 @@ def choose_metadata_columns(hu_df: pd.DataFrame, fourier_df: pd.DataFrame) -> li
         "common_name",
     ]
 
-    available = []
-    for col in preferred:
-        if col in hu_df.columns or col in fourier_df.columns:
-            available.append(col)
-
-    return available
+    return [
+        col for col in preferred
+        if col in hu_df.columns or col in fourier_df.columns
+    ]
 
 
 def fill_filename_if_missing(df: pd.DataFrame) -> pd.DataFrame:
@@ -146,9 +135,10 @@ def fill_filename_if_missing(df: pd.DataFrame) -> pd.DataFrame:
 
 def save_feature_columns(feature_columns: list[str], output_path: Path) -> None:
     """Save the feature column names, one per line."""
-    with open(output_path, "w", encoding="utf-8") as f:
-        for col in feature_columns:
-            f.write(col + "\n")
+    output_path.write_text(
+        "".join(f"{column}\n" for column in feature_columns),
+        encoding="utf-8",
+    )
 
 
 def write_summary(
@@ -192,10 +182,6 @@ def write_summary(
     output_path.write_text("\n".join(lines), encoding="utf-8")
 
 
-# =========================
-# 2. Main build function
-# =========================
-
 def build_classical_features(
     processed_dir: Path,
     hu_csv: Path | None = None,
@@ -208,14 +194,9 @@ def build_classical_features(
     features_dir = processed_dir / "features"
     features_dir.mkdir(parents=True, exist_ok=True)
 
-    if hu_csv is None:
-        hu_csv = features_dir / "hu_moments_features.csv"
-
-    if fourier_csv is None:
-        fourier_csv = features_dir / "fourier_features.csv"
-
-    if output_csv is None:
-        output_csv = features_dir / "classical_features.csv"
+    hu_csv = hu_csv or features_dir / "hu_moments_features.csv"
+    fourier_csv = fourier_csv or features_dir / "fourier_features.csv"
+    output_csv = output_csv or features_dir / "classical_features.csv"
 
     hu_df = read_csv_checked(hu_csv, "Hu moments features")
     fourier_df = read_csv_checked(fourier_csv, "Fourier features")
@@ -251,12 +232,12 @@ def build_classical_features(
         exclude_columns=exclude_columns,
     )
 
-    if len(hu_feature_cols) == 0:
+    if not hu_feature_cols:
         raise ValueError(
             "没有找到 Hu 特征列。请检查 hu_moments_features.csv 中是否有 hu_1 ... hu_7。"
         )
 
-    if len(fourier_feature_cols) == 0:
+    if not fourier_feature_cols:
         raise ValueError(
             "没有找到 Fourier 特征列。请检查 fourier_features.csv 中是否有 fd_ 或 fourier_ 开头的列。"
         )
@@ -309,8 +290,6 @@ def build_classical_features(
     # Some useful diagnostics for merge quality.
     hu_ids = set(hu_df["image_id"].astype(str))
     fourier_ids = set(fourier_df["image_id"].astype(str))
-    merged_ids = set(merged["image_id"].astype(str))
-
     missing_hu_count = len(fourier_ids - hu_ids)
     missing_fourier_count = len(hu_ids - fourier_ids)
 
@@ -352,10 +331,6 @@ def build_classical_features(
 
     return output_csv
 
-
-# =========================
-# 3. Command line interface
-# =========================
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(

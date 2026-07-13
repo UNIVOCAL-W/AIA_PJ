@@ -23,21 +23,14 @@ Notes:
       slow processing from writing thousands of PNG files. Masks and boundaries are saved for every image.
 """
 
-from __future__ import annotations
-
 import argparse
 import csv
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Dict, Iterable, List, Optional, Tuple
 
 import cv2
 import numpy as np
 
-
-# =========================
-# 1. Default paths and options
-# =========================
 
 DEFAULT_INPUT_DIR = Path(r"C:\AIA_workspace\data\raw\Leaves")
 DEFAULT_OUTPUT_DIR = Path(r"C:\AIA_workspace\data\processed")
@@ -53,10 +46,6 @@ PNG_COMPRESSION = 1  # 0 is fastest/largest, 9 is slowest/smallest.
 # Save masks and boundaries for every image. Save preview images only for first N images per species.
 DEFAULT_PREVIEWS_PER_CLASS = 5
 
-
-# =========================
-# 2. Flavia label mapping
-# =========================
 
 FLAVIA_RANGES = [
     (1001, 1059, 1, "Phyllostachys edulis (Carr.) Houz.", "pubescent bamboo"),
@@ -95,7 +84,7 @@ FLAVIA_RANGES = [
 ]
 
 
-def get_flavia_label(image_id: str) -> Dict[str, str]:
+def get_flavia_label(image_id: str) -> dict[str, str]:
     """Return label metadata from a Flavia 4-digit image id."""
     try:
         numeric_id = int(image_id)
@@ -121,10 +110,6 @@ def get_flavia_label(image_id: str) -> Dict[str, str]:
     }
 
 
-# =========================
-# 3. Data containers
-# =========================
-
 @dataclass
 class OutputDirs:
     root: Path
@@ -147,19 +132,15 @@ class OutputDirs:
         return dirs
 
 
-# =========================
-# 4. Utility functions
-# =========================
-
-def find_image_paths(input_dir: Path) -> List[Path]:
+def find_image_paths(input_dir: Path) -> list[Path]:
     """Find all images recursively and return them in a stable sorted order."""
-    image_paths: List[Path] = []
+    image_paths: list[Path] = []
     for suffix in IMAGE_SUFFIXES:
         image_paths.extend(input_dir.rglob(suffix))
     return sorted(image_paths)
 
 
-def read_image(img_path: Path) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+def read_image(img_path: Path) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     """Read image and return BGR, RGB, grayscale."""
     img_bgr = cv2.imread(str(img_path))
     if img_bgr is None:
@@ -223,7 +204,7 @@ def get_largest_ordered_contour(binary: np.ndarray) -> np.ndarray:
     return largest_contour.reshape(-1, 2)
 
 
-def contour_to_filled_mask(gray_shape: Tuple[int, int], contour_points: np.ndarray) -> np.ndarray:
+def contour_to_filled_mask(gray_shape: tuple[int, int], contour_points: np.ndarray) -> np.ndarray:
     """Create a clean filled mask from ordered contour points."""
     mask = np.zeros(gray_shape, dtype=np.uint8)
     contour_cv = contour_points.reshape(-1, 1, 2).astype(np.int32)
@@ -231,7 +212,11 @@ def contour_to_filled_mask(gray_shape: Tuple[int, int], contour_points: np.ndarr
     return mask
 
 
-def make_cropped_leaf(img_rgb: np.ndarray, mask: np.ndarray, bbox: Tuple[int, int, int, int]) -> np.ndarray:
+def make_cropped_leaf(
+    img_rgb: np.ndarray,
+    mask: np.ndarray,
+    bbox: tuple[int, int, int, int],
+) -> np.ndarray:
     """Crop leaf bounding box and replace background with white."""
     x, y, w, h = bbox
     cropped_img = img_rgb[y : y + h, x : x + w]
@@ -254,15 +239,11 @@ def save_png(path: Path, image: np.ndarray) -> None:
     cv2.imwrite(str(path), image, [cv2.IMWRITE_PNG_COMPRESSION, PNG_COMPRESSION])
 
 
-# =========================
-# 5. Main processing functions
-# =========================
-
 def preprocess_leaf_image(
     img_path: Path,
     out_dirs: OutputDirs,
     save_preview: bool = False,
-) -> Dict[str, object]:
+) -> dict[str, object]:
     """Preprocess one leaf image and save mask/boundary/optional preview images."""
     img_bgr, img_rgb, gray = read_image(img_path)
 
@@ -320,7 +301,7 @@ def preprocess_leaf_image(
     }
 
 
-def write_summary_csv(summary_path: Path, records: List[Dict[str, object]]) -> None:
+def write_summary_csv(summary_path: Path, records: list[dict[str, object]]) -> None:
     if not records:
         return
 
@@ -331,7 +312,7 @@ def write_summary_csv(summary_path: Path, records: List[Dict[str, object]]) -> N
         writer.writerows(records)
 
 
-def write_failed_files(failed_path: Path, failed_files: List[Tuple[str, str]]) -> None:
+def write_failed_files(failed_path: Path, failed_files: list[tuple[str, str]]) -> None:
     with open(failed_path, "w", encoding="utf-8") as f:
         for path, reason in failed_files:
             f.write(f"{path}\t{reason}\n")
@@ -350,9 +331,9 @@ def process_dataset(input_dir: Path, output_dir: Path, previews_per_class: int =
     if not image_paths:
         raise FileNotFoundError(f"没有在该路径下找到图片: {input_dir}")
 
-    records: List[Dict[str, object]] = []
-    failed_files: List[Tuple[str, str]] = []
-    preview_counts: Dict[str, int] = {}
+    records: list[dict[str, object]] = []
+    failed_files: list[tuple[str, str]] = []
+    preview_counts: dict[str, int] = {}
 
     for i, img_path in enumerate(image_paths, start=1):
         label_info = get_flavia_label(img_path.stem)
@@ -393,10 +374,6 @@ def process_dataset(input_dir: Path, output_dir: Path, previews_per_class: int =
     print("处理记录保存到:", summary_path)
     print("失败文件列表保存到:", failed_path)
 
-
-# =========================
-# 6. CLI entry point
-# =========================
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Preprocess Flavia leaf images for Topic A.")

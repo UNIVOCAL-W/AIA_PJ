@@ -25,7 +25,6 @@ import argparse
 import json
 import time
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
 
 import joblib
 import numpy as np
@@ -35,12 +34,7 @@ from sklearn.naive_bayes import GaussianNB
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
-
-try:
-    from tqdm.auto import tqdm
-except ImportError:  # fallback if tqdm is not installed
-    def tqdm(iterable=None, **kwargs):
-        return iterable if iterable is not None else []
+from tqdm.auto import tqdm
 
 
 METADATA_COLUMNS = [
@@ -52,7 +46,7 @@ METADATA_COLUMNS = [
 ]
 
 
-def read_feature_columns(feature_columns_path: Path, train_df: pd.DataFrame) -> List[str]:
+def read_feature_columns(feature_columns_path: Path, train_df: pd.DataFrame) -> list[str]:
     """Read feature column names from txt; if unavailable, infer from column prefixes."""
     if feature_columns_path.exists():
         with open(feature_columns_path, "r", encoding="utf-8") as f:
@@ -81,7 +75,7 @@ def load_train_test(
     train_csv: Path,
     test_csv: Path,
     feature_columns_path: Path,
-) -> Tuple[pd.DataFrame, pd.DataFrame, List[str]]:
+) -> tuple[pd.DataFrame, pd.DataFrame, list[str]]:
     if not train_csv.exists():
         raise FileNotFoundError(f"训练集文件不存在: {train_csv}")
     if not test_csv.exists():
@@ -107,7 +101,7 @@ def load_train_test(
     return train_df, test_df, feature_cols
 
 
-def make_models(knn_k: int, scale_nb: bool = True) -> Dict[str, Pipeline]:
+def make_models(knn_k: int, scale_nb: bool = True) -> dict[str, Pipeline]:
     """Create sklearn pipelines. Scalers are fit only on training data."""
     if scale_nb:
         nb_model = Pipeline([
@@ -115,9 +109,7 @@ def make_models(knn_k: int, scale_nb: bool = True) -> Dict[str, Pipeline]:
             ("classifier", GaussianNB()),
         ])
     else:
-        nb_model = Pipeline([
-            ("classifier", GaussianNB()),
-        ])
+        nb_model = Pipeline([("classifier", GaussianNB())])
 
     knn_model = Pipeline([
         ("scaler", StandardScaler()),
@@ -130,7 +122,10 @@ def make_models(knn_k: int, scale_nb: bool = True) -> Dict[str, Pipeline]:
     }
 
 
-def predict_with_confidence(model: Pipeline, X: np.ndarray) -> Tuple[np.ndarray, Optional[np.ndarray]]:
+def predict_with_confidence(
+    model: Pipeline,
+    X: np.ndarray,
+) -> tuple[np.ndarray, np.ndarray | None]:
     """Return predictions and max predicted probability if available."""
     y_pred = model.predict(X)
 
@@ -145,7 +140,7 @@ def predict_with_confidence(model: Pipeline, X: np.ndarray) -> Tuple[np.ndarray,
 def build_prediction_table(
     base_df: pd.DataFrame,
     y_pred: np.ndarray,
-    confidence: Optional[np.ndarray],
+    confidence: np.ndarray | None,
     model_name: str,
 ) -> pd.DataFrame:
     keep_cols = [col for col in METADATA_COLUMNS if col in base_df.columns]
@@ -189,7 +184,7 @@ def check_cuda_if_requested(check_cuda: bool) -> None:
 def train_and_save(
     train_df: pd.DataFrame,
     test_df: pd.DataFrame,
-    feature_cols: List[str],
+    feature_cols: list[str],
     output_model_dir: Path,
     output_predictions_dir: Path,
     output_tables_dir: Path,
@@ -244,7 +239,7 @@ def train_and_save(
             "model_path": str(model_path),
             "prediction_path": str(pred_path),
             "knn_k": int(knn_k) if model_name.startswith("knn") else None,
-            "standard_scaler": True if (model_name.startswith("knn") or scale_nb) else False,
+            "standard_scaler": model_name.startswith("knn") or scale_nb,
         }
         save_json(output_model_dir / f"{model_name}_config.json", config)
 

@@ -1,7 +1,6 @@
 import argparse
 import json
 import os
-import sys
 import time
 from pathlib import Path
 
@@ -24,10 +23,6 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
-
-if hasattr(sys.stdout, "reconfigure"):
-    sys.stdout.reconfigure(encoding="utf-8")
-    sys.stderr.reconfigure(encoding="utf-8")
 
 FEATURE_DIR = WORKSPACE_DIR / "data" / "processed" / "features"
 SPLIT_DIR = WORKSPACE_DIR / "data" / "processed" / "splits"
