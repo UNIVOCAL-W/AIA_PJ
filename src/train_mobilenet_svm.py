@@ -38,7 +38,7 @@ def load_features(path: Path) -> tuple[pd.DataFrame, list[str]]:
     feature_columns = [col for col in df.columns if col.startswith("feat_")]
 
     if not feature_columns:
-        raise ValueError(f"没有找到特征列: {path}")
+        raise ValueError(f"No feature columns found: {path}")
 
     return df, feature_columns
 
@@ -118,8 +118,8 @@ def plot_example_grid(example_df: pd.DataFrame, output_path: Path, title: str) -
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="训练 MobileNetV2 特征 + Linear SVM 分类器。")
-    parser.add_argument("--max-iter", type=int, default=2000, help="SGD linear SVM 最大迭代次数。")
+    parser = argparse.ArgumentParser(description="Train a Linear SVM classifier on MobileNetV2 features.")
+    parser.add_argument("--max-iter", type=int, default=2000, help="Maximum number of SGD linear SVM iterations.")
     args = parser.parse_args()
 
     MODEL_DIR.mkdir(parents=True, exist_ok=True)
@@ -131,7 +131,7 @@ def main() -> None:
     test_path = FEATURE_DIR / "mobilenet_test_features.csv"
 
     if not train_path.exists() or not test_path.exists():
-        raise FileNotFoundError("请先运行: python src\\mobilenet_features.py --device cuda --batch-size 8")
+        raise FileNotFoundError("Run this first: python src\\mobilenet_features.py --device cuda --batch-size 8")
 
     train_df, feature_columns = load_features(train_path)
     test_df, _ = load_features(test_path)
@@ -158,10 +158,10 @@ def main() -> None:
         ]
     )
 
-    print("开始训练 MobileNetV2 + Linear SVM")
-    print(f"训练样本数: {len(train_df)}")
-    print(f"测试样本数: {len(test_df)}")
-    print(f"特征维度: {len(feature_columns)}")
+    print("Start training MobileNetV2 + Linear SVM")
+    print(f"Training samples: {len(train_df)}")
+    print(f"Test samples: {len(test_df)}")
+    print(f"Feature dimension: {len(feature_columns)}")
 
     start_time = time.time()
     model.fit(x_train, y_train)
@@ -282,15 +282,15 @@ def main() -> None:
     with open(config_path, "w", encoding="utf-8") as f:
         json.dump(config, f, indent=2, ensure_ascii=False)
 
-    print("训练完成")
-    print(f"训练集准确率: {train_accuracy:.4f}")
-    print(f"测试集准确率: {test_accuracy:.4f}")
-    print(f"训练时间: {training_time:.2f} 秒")
-    print(f"模型保存到: {model_path}")
-    print(f"预测结果保存到: {prediction_path}")
-    print(f"评估摘要保存到: {summary_path}")
-    print(f"现代流程表格保存到: {TABLE_DIR}")
-    print(f"现代流程图片保存到: {FIGURE_DIR}")
+    print("Training finished")
+    print(f"Train accuracy: {train_accuracy:.4f}")
+    print(f"Test accuracy: {test_accuracy:.4f}")
+    print(f"Training time: {training_time:.2f} seconds")
+    print(f"Model saved to: {model_path}")
+    print(f"Predictions saved to: {prediction_path}")
+    print(f"Evaluation summary saved to: {summary_path}")
+    print(f"Modern pipeline tables saved to: {TABLE_DIR}")
+    print(f"Modern pipeline figures saved to: {FIGURE_DIR}")
 
 
 if __name__ == "__main__":

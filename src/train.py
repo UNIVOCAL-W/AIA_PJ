@@ -55,19 +55,19 @@ def read_feature_columns(feature_columns_path: Path, train_df: pd.DataFrame) -> 
         missing = [col for col in feature_cols if col not in train_df.columns]
         if missing:
             raise ValueError(
-                "feature_columns.txt 中有列在 train CSV 中不存在，例如: "
+                "feature_columns.txt contains columns that are missing from the train CSV, for example: "
                 f"{missing[:10]}"
             )
         return feature_cols
 
-    print(f"[警告] 没有找到特征列文件: {feature_columns_path}")
-    print("将自动使用 hu_ / fd_ / fourier_ / fft_ 开头的列作为特征。")
+    print(f"[warning] Feature column file not found: {feature_columns_path}")
+    print("Automatically using columns starting with hu_ / fd_ / fourier_ / fft_ as features.")
     feature_cols = [
         col for col in train_df.columns
         if col.startswith(("hu_", "fd_", "fourier_", "fft_"))
     ]
     if not feature_cols:
-        raise ValueError("没有找到特征列。请检查 classical_features / train_features 文件。")
+        raise ValueError("No feature columns found. Check the classical_features / train_features files.")
     return feature_cols
 
 
@@ -77,15 +77,15 @@ def load_train_test(
     feature_columns_path: Path,
 ) -> tuple[pd.DataFrame, pd.DataFrame, list[str]]:
     if not train_csv.exists():
-        raise FileNotFoundError(f"训练集文件不存在: {train_csv}")
+        raise FileNotFoundError(f"Training set file does not exist: {train_csv}")
     if not test_csv.exists():
-        raise FileNotFoundError(f"测试集文件不存在: {test_csv}")
+        raise FileNotFoundError(f"Test set file does not exist: {test_csv}")
 
     train_df = pd.read_csv(train_csv)
     test_df = pd.read_csv(test_csv)
 
     if "label" not in train_df.columns or "label" not in test_df.columns:
-        raise ValueError("train/test CSV 中必须包含 label 列。")
+        raise ValueError("train/test CSV files must contain a label column.")
 
     feature_cols = read_feature_columns(feature_columns_path, train_df)
 
@@ -94,9 +94,9 @@ def load_train_test(
         test_df[col] = pd.to_numeric(test_df[col], errors="coerce")
 
     if train_df[feature_cols].isna().any().any():
-        raise ValueError("训练集特征中存在 NaN，请检查特征提取或合并步骤。")
+        raise ValueError("Training features contain NaN values. Check feature extraction or merging.")
     if test_df[feature_cols].isna().any().any():
-        raise ValueError("测试集特征中存在 NaN，请检查特征提取或合并步骤。")
+        raise ValueError("Test features contain NaN values. Check feature extraction or merging.")
 
     return train_df, test_df, feature_cols
 
@@ -169,8 +169,8 @@ def check_cuda_if_requested(check_cuda: bool) -> None:
     if not check_cuda:
         return
 
-    print("\nCUDA 检查")
-    print("说明：当前 classical sklearn 模型不使用 CUDA；这个检查只是确认环境。")
+    print("\nCUDA check")
+    print("Note: the classical sklearn models do not use CUDA; this check only confirms the environment.")
     try:
         import torch
         available = torch.cuda.is_available()
@@ -178,7 +178,7 @@ def check_cuda_if_requested(check_cuda: bool) -> None:
         if available:
             print("CUDA device:", torch.cuda.get_device_name(0))
     except Exception as exc:
-        print("没有成功导入/检查 PyTorch CUDA:", exc)
+        print("Could not import PyTorch or check CUDA:", exc)
 
 
 def train_and_save(
@@ -204,7 +204,7 @@ def train_and_save(
     summary_records = []
 
     for model_name, model in tqdm(models.items(), desc="Training classical models", unit="model"):
-        print(f"\n正在训练: {model_name}")
+        print(f"\nTraining: {model_name}")
         start_time = time.time()
 
         model.fit(X_train, y_train)
@@ -245,7 +245,7 @@ def train_and_save(
 
         summary_records.append(config)
 
-        print(f"完成: {model_name}")
+        print(f"Finished: {model_name}")
         print(f"  train accuracy = {train_acc:.4f}")
         print(f"  test  accuracy = {test_acc:.4f}")
         print(f"  model saved to = {model_path}")
@@ -260,9 +260,9 @@ def train_and_save(
         for col in feature_cols:
             f.write(col + "\n")
 
-    print("\n训练全部完成")
-    print("训练摘要:", summary_path)
-    print("使用的特征列:", feature_info_path)
+    print("\nAll training finished")
+    print("Training summary:", summary_path)
+    print("Feature columns used:", feature_info_path)
 
     return summary_df
 
@@ -332,9 +332,9 @@ def main() -> None:
 
     check_cuda_if_requested(args.check_cuda)
 
-    print("输入训练集:", train_csv)
-    print("输入测试集:", test_csv)
-    print("特征列文件:", feature_columns_path)
+    print("Input training set:", train_csv)
+    print("Input test set:", test_csv)
+    print("Feature column file:", feature_columns_path)
 
     train_df, test_df, feature_cols = load_train_test(
         train_csv=train_csv,
@@ -342,10 +342,10 @@ def main() -> None:
         feature_columns_path=feature_columns_path,
     )
 
-    print("训练样本数:", len(train_df))
-    print("测试样本数:", len(test_df))
-    print("特征数量:", len(feature_cols))
-    print("类别数量:", train_df["label"].nunique())
+    print("Training samples:", len(train_df))
+    print("Test samples:", len(test_df))
+    print("Number of features:", len(feature_cols))
+    print("Number of classes:", train_df["label"].nunique())
 
     train_and_save(
         train_df=train_df,

@@ -31,19 +31,19 @@ DEFAULT_OUTPUT_DIR = Path(r"C:\AIA_workspace\data\processed\splits")
 def read_features(features_csv: Path) -> pd.DataFrame:
     """Read classical feature table and do basic checks."""
     if not features_csv.exists():
-        raise FileNotFoundError(f"找不到特征文件: {features_csv}")
+        raise FileNotFoundError(f"Feature file not found: {features_csv}")
 
     df = pd.read_csv(features_csv)
 
     if df.empty:
-        raise ValueError(f"特征文件是空的: {features_csv}")
+        raise ValueError(f"Feature file is empty: {features_csv}")
 
     required_columns = {"image_id", "label"}
     missing = required_columns - set(df.columns)
     if missing:
-        raise ValueError(f"特征文件缺少必要列: {missing}")
+        raise ValueError(f"Feature file is missing required columns: {missing}")
 
-    # 统一 image_id 格式，避免 1001 被读成 1001.0
+    # Normalize image_id so values such as 1001 are not read as 1001.0.
     df["image_id"] = df["image_id"].astype(str).str.replace(r"\.0$", "", regex=True)
 
     if "filename" not in df.columns:
@@ -51,10 +51,10 @@ def read_features(features_csv: Path) -> pd.DataFrame:
 
     if df["image_id"].duplicated().any():
         duplicated = df.loc[df["image_id"].duplicated(), "image_id"].head(10).tolist()
-        raise ValueError(f"存在重复 image_id，例如: {duplicated}")
+        raise ValueError(f"Duplicated image_id values found, for example: {duplicated}")
 
     if df["label"].isna().any():
-        raise ValueError("label 列中存在空值，请先检查 classical_features.csv。")
+        raise ValueError("The label column contains missing values. Check classical_features.csv first.")
 
     return df
 
@@ -71,7 +71,7 @@ def make_stratified_split(
     too_small = class_counts[class_counts < 2]
     if not too_small.empty:
         raise ValueError(
-            "以下类别样本数少于 2，无法做 stratified train/test split:\n"
+            "The following classes have fewer than 2 samples and cannot be stratified:\n"
             + too_small.to_string()
         )
 
@@ -90,7 +90,7 @@ def make_stratified_split(
 
     split_df = pd.concat([train_df, test_df], axis=0, ignore_index=True)
 
-    # 排序，方便人工检查
+    # Sort for easier manual checking.
     split_df["_sort_id"] = pd.to_numeric(split_df["image_id"], errors="coerce")
     split_df = split_df.sort_values(["_sort_id", "image_id"]).drop(columns=["_sort_id"])
 
@@ -174,17 +174,17 @@ def save_outputs(
 
     summary_txt.write_text("\n".join(summary_lines), encoding="utf-8")
 
-    print("\n划分完成")
-    print("总样本数:", len(split_df))
-    print("训练集样本数:", len(train_df))
-    print("测试集样本数:", len(test_df))
-    print("类别数量:", split_df["label"].nunique())
-    print("特征数量:", len(feature_columns))
-    print("split 文件:", split_csv)
-    print("train 文件:", train_csv)
-    print("test 文件:", test_csv)
-    print("类别统计:", counts_csv)
-    print("摘要文件:", summary_txt)
+    print("\nSplit finished")
+    print("Total samples:", len(split_df))
+    print("Training samples:", len(train_df))
+    print("Test samples:", len(test_df))
+    print("Number of classes:", split_df["label"].nunique())
+    print("Number of features:", len(feature_columns))
+    print("Split file:", split_csv)
+    print("Train file:", train_csv)
+    print("Test file:", test_csv)
+    print("Class counts:", counts_csv)
+    print("Summary file:", summary_txt)
 
 
 
@@ -229,7 +229,7 @@ def main() -> None:
     args = parse_args()
 
     if not (0.0 < args.test_size < 1.0):
-        raise ValueError("--test-size 必须在 0 和 1 之间，例如 0.3。")
+        raise ValueError("--test-size must be between 0 and 1, for example 0.3.")
 
     df = read_features(args.features_csv)
     split_df = make_stratified_split(

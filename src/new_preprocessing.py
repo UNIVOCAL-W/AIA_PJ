@@ -323,13 +323,13 @@ def process_dataset(input_dir: Path, output_dir: Path, previews_per_class: int =
 
     image_paths = find_image_paths(input_dir)
 
-    print("输入文件夹:", input_dir)
-    print("输出文件夹:", output_dir)
-    print("找到图片数量:", len(image_paths))
-    print("每类预览图保存数量:", previews_per_class)
+    print("Input folder:", input_dir)
+    print("Output folder:", output_dir)
+    print("Number of images found:", len(image_paths))
+    print("Preview images saved per class:", previews_per_class)
 
     if not image_paths:
-        raise FileNotFoundError(f"没有在该路径下找到图片: {input_dir}")
+        raise FileNotFoundError(f"No images found under this path: {input_dir}")
 
     records: list[dict[str, object]] = []
     failed_files: list[tuple[str, str]] = []
@@ -340,7 +340,7 @@ def process_dataset(input_dir: Path, output_dir: Path, previews_per_class: int =
         preview_key = label_info["label"]
         save_preview = preview_counts.get(preview_key, 0) < previews_per_class
 
-        print(f"[{i}/{len(image_paths)}] 正在处理: {img_path.name} | label={preview_key} | save_preview={save_preview}")
+        print(f"[{i}/{len(image_paths)}] Processing: {img_path.name} | label={preview_key} | save_preview={save_preview}")
 
         try:
             record = preprocess_leaf_image(img_path, out_dirs, save_preview=save_preview)
@@ -351,7 +351,7 @@ def process_dataset(input_dir: Path, output_dir: Path, previews_per_class: int =
 
         except Exception as exc:  # keep batch processing robust
             reason = str(exc)
-            print(f"  [失败] {img_path.name}: {reason}")
+            print(f"  [failed] {img_path.name}: {reason}")
             failed_files.append((str(img_path), reason))
 
     summary_path = output_dir / "preprocess_summary.csv"
@@ -362,17 +362,17 @@ def process_dataset(input_dir: Path, output_dir: Path, previews_per_class: int =
 
     unknown_labels = sum(1 for r in records if r.get("label") == "unknown")
 
-    print("\n处理完成")
-    print("成功处理图片数量:", len(records))
-    print("处理失败图片数量:", len(failed_files))
-    print("unknown label 数量:", unknown_labels)
-    print("Mask 保存到:", out_dirs.masks)
-    print("Boundary points 保存到:", out_dirs.boundaries)
-    print("每类预览图实际保存数量:", dict(sorted(preview_counts.items(), key=lambda item: item[0])))
-    print("裁剪预览图保存到:", out_dirs.cropped_preview)
-    print("轮廓预览图保存到:", out_dirs.contours_preview)
-    print("处理记录保存到:", summary_path)
-    print("失败文件列表保存到:", failed_path)
+    print("\nProcessing finished")
+    print("Successfully processed images:", len(records))
+    print("Failed images:", len(failed_files))
+    print("Unknown labels:", unknown_labels)
+    print("Masks saved to:", out_dirs.masks)
+    print("Boundary points saved to:", out_dirs.boundaries)
+    print("Actual preview counts per class:", dict(sorted(preview_counts.items(), key=lambda item: item[0])))
+    print("Cropped previews saved to:", out_dirs.cropped_preview)
+    print("Contour previews saved to:", out_dirs.contours_preview)
+    print("Processing records saved to:", summary_path)
+    print("Failed file list saved to:", failed_path)
 
 
 def parse_args() -> argparse.Namespace:

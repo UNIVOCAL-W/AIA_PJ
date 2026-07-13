@@ -54,11 +54,11 @@ def extract_features(csv_path: Path, output_path: Path, device: torch.device, ba
 
     rows = []
 
-    print(f"开始提取特征: {csv_path.name}")
-    print(f"样本数: {len(dataset)}")
+    print(f"Start extracting features: {csv_path.name}")
+    print(f"Number of samples: {len(dataset)}")
 
     with torch.no_grad():
-        for batch in tqdm(loader, desc="提取 MobileNetV2 特征"):
+        for batch in tqdm(loader, desc="Extracting MobileNetV2 features"):
             images = batch["image"].to(device)
             features = model(images).cpu().numpy()
 
@@ -79,18 +79,18 @@ def extract_features(csv_path: Path, output_path: Path, device: torch.device, ba
     output_path.parent.mkdir(parents=True, exist_ok=True)
     pd.DataFrame(rows).to_csv(output_path, index=False)
 
-    print(f"特征维度: {len([c for c in rows[0].keys() if c.startswith('feat_')])}")
-    print(f"特征保存到: {output_path}")
+    print(f"Feature dimension: {len([c for c in rows[0].keys() if c.startswith('feat_')])}")
+    print(f"Features saved to: {output_path}")
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="使用 MobileNetV2 提取叶片图像特征。")
-    parser.add_argument("--batch-size", type=int, default=8, help="批大小，GTX 1050 Ti 建议从 8 开始。")
+    parser = argparse.ArgumentParser(description="Extract leaf image features with MobileNetV2.")
+    parser.add_argument("--batch-size", type=int, default=8, help="Batch size. GTX 1050 Ti users can start with 8.")
     parser.add_argument(
         "--device",
         choices=["auto", "cuda", "cpu"],
         default="auto",
-        help="运行设备。默认 auto 会优先使用 CUDA。",
+        help="Runtime device. The default auto setting uses CUDA first when available.",
     )
     return parser.parse_args()
 
@@ -100,7 +100,7 @@ def choose_device(device_name: str) -> torch.device:
         device_name = "cuda" if torch.cuda.is_available() else "cpu"
 
     if device_name == "cuda" and not torch.cuda.is_available():
-        print("没有检测到可用 CUDA，将改用 CPU。")
+        print("CUDA is not available; switching to CPU.")
         device_name = "cpu"
 
     return torch.device(device_name)
@@ -114,11 +114,11 @@ def main() -> None:
     test_csv = SPLIT_DIR / "modern_test.csv"
 
     if not train_csv.exists() or not test_csv.exists():
-        raise FileNotFoundError("请先运行: python src\\split_modern.py")
+        raise FileNotFoundError("Run this first: python src\\split_modern.py")
 
-    print("MobileNetV2 特征提取开始")
-    print(f"使用设备: {device}")
-    print(f"批大小: {args.batch_size}")
+    print("MobileNetV2 feature extraction started")
+    print(f"Device: {device}")
+    print(f"Batch size: {args.batch_size}")
 
     extract_features(
         train_csv,
@@ -133,7 +133,7 @@ def main() -> None:
         args.batch_size,
     )
 
-    print("MobileNetV2 特征提取完成")
+    print("MobileNetV2 feature extraction finished")
 
 
 if __name__ == "__main__":

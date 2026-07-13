@@ -64,7 +64,7 @@ def build_table() -> pd.DataFrame:
         label = get_label(image_id)
 
         if label is None:
-            print(f"[跳过] 无法识别类别: {crop_path.name}")
+            print(f"[skip] Could not identify class: {crop_path.name}")
             continue
 
         rows.append(
@@ -77,7 +77,7 @@ def build_table() -> pd.DataFrame:
         )
 
     if not rows:
-        raise FileNotFoundError(f"没有找到可用的裁剪图片: {CROPPED_DIR}")
+        raise FileNotFoundError(f"No usable cropped images found: {CROPPED_DIR}")
 
     return pd.DataFrame(rows)
 
@@ -122,14 +122,14 @@ def main() -> None:
     )
     counts.to_csv(counts_path, index=False)
 
-    print("现代流程数据划分完成")
-    print(f"总样本数: {len(df)}")
-    print(f"训练集: {len(train_df)}")
-    print(f"测试集: {len(test_df)}")
-    print(f"类别数: {df['label'].nunique()}")
-    print(f"训练集保存到: {train_path}")
-    print(f"测试集保存到: {test_path}")
-    print(f"完整划分保存到: {split_path}")
+    print("Modern pipeline data split finished")
+    print(f"Total samples: {len(df)}")
+    print(f"Training set: {len(train_df)}")
+    print(f"Test set: {len(test_df)}")
+    print(f"Number of classes: {df['label'].nunique()}")
+    print(f"Training set saved to: {train_path}")
+    print(f"Test set saved to: {test_path}")
+    print(f"Full split saved to: {split_path}")
 
 
 if __name__ == "__main__":

@@ -26,12 +26,12 @@ import pandas as pd
 def read_csv_checked(path: Path, name: str) -> pd.DataFrame:
     """Read a CSV file and raise a clear error if it does not exist."""
     if not path.exists():
-        raise FileNotFoundError(f"{name} 文件不存在: {path}")
+        raise FileNotFoundError(f"{name} file does not exist: {path}")
 
     df = pd.read_csv(path)
 
     if df.empty:
-        raise ValueError(f"{name} 是空表: {path}")
+        raise ValueError(f"{name} is an empty table: {path}")
 
     return df
 
@@ -64,7 +64,7 @@ def normalize_image_id_column(df: pd.DataFrame, table_name: str) -> pd.DataFrame
         return df
 
     raise ValueError(
-        f"{table_name} 中既没有 image_id 也没有 filename，无法对齐两种特征。"
+        f"{table_name} has neither image_id nor filename, so the two feature tables cannot be aligned."
     )
 
 
@@ -98,8 +98,8 @@ def ensure_no_duplicate_image_ids(df: pd.DataFrame, table_name: str) -> None:
     if duplicated:
         preview = duplicated[:10]
         raise ValueError(
-            f"{table_name} 中存在重复 image_id，例如: {preview}。"
-            "请先检查特征提取脚本是否重复写入了同一张图片。"
+            f"{table_name} contains duplicated image_id values, for example: {preview}. "
+            "Check whether the feature extraction script wrote the same image more than once."
         )
 
 
@@ -234,12 +234,12 @@ def build_classical_features(
 
     if not hu_feature_cols:
         raise ValueError(
-            "没有找到 Hu 特征列。请检查 hu_moments_features.csv 中是否有 hu_1 ... hu_7。"
+            "No Hu feature columns found. Check whether hu_moments_features.csv contains hu_1 ... hu_7."
         )
 
     if not fourier_feature_cols:
         raise ValueError(
-            "没有找到 Fourier 特征列。请检查 fourier_features.csv 中是否有 fd_ 或 fourier_ 开头的列。"
+            "No Fourier feature columns found. Check whether fourier_features.csv contains columns starting with fd_ or fourier_."
         )
 
     # Keep Hu metadata first. For Fourier, only keep image_id and feature columns.
@@ -277,8 +277,8 @@ def build_classical_features(
     missing_total = int(merged[feature_columns].isna().sum().sum())
     if missing_total > 0:
         raise ValueError(
-            f"合并后的特征表中存在 {missing_total} 个缺失特征值。"
-            "请检查 Hu 和 Fourier 特征文件是否完整。"
+            f"The merged feature table contains {missing_total} missing feature values. "
+            "Check whether the Hu and Fourier feature files are complete."
         )
 
     output_csv.parent.mkdir(parents=True, exist_ok=True)
@@ -313,21 +313,21 @@ def build_classical_features(
         missing_fourier_count=missing_fourier_count,
     )
 
-    print("\n合并完成")
-    print("Hu 特征数量:", len(hu_feature_cols))
-    print("Fourier 特征数量:", len(fourier_feature_cols))
-    print("总特征数量:", len(feature_columns))
-    print("合并后样本数量:", len(merged))
+    print("\nMerge finished")
+    print("Hu feature count:", len(hu_feature_cols))
+    print("Fourier feature count:", len(fourier_feature_cols))
+    print("Total feature count:", len(feature_columns))
+    print("Merged sample count:", len(merged))
     if label_count is not None:
-        print("类别数量:", label_count)
-    print("输出文件:", output_csv)
-    print("特征列文件:", feature_columns_path)
-    print("摘要文件:", summary_path)
+        print("Number of classes:", label_count)
+    print("Output file:", output_csv)
+    print("Feature column file:", feature_columns_path)
+    print("Summary file:", summary_path)
 
     if join_type == "inner" and (missing_hu_count > 0 or missing_fourier_count > 0):
-        print("\n注意：inner join 丢弃了一些没有同时拥有 Hu 和 Fourier 特征的样本。")
-        print("Fourier 中存在但 Hu 中不存在的样本数:", missing_hu_count)
-        print("Hu 中存在但 Fourier 中不存在的样本数:", missing_fourier_count)
+        print("\nNote: the inner join discarded samples that do not have both Hu and Fourier features.")
+        print("Samples in Fourier but missing from Hu:", missing_hu_count)
+        print("Samples in Hu but missing from Fourier:", missing_fourier_count)
 
     return output_csv
 
