@@ -1,2 +1,0 @@
-num_runs,mean_test_accuracy,std_test_accuracy,min_test_accuracy,max_test_accuracy
-5,0.9846422338568935,0.006219382087680779,0.9755671902268761,0.9912739965095986

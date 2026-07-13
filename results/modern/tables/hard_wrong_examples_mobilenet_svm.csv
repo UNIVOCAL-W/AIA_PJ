@@ -1,7 +1,0 @@
-image_id,filename,label,prediction,correct,crop_path
-1518,1518.jpg,9,15,False,D:\AIA_workspace\data\processed\cropped\1518_crop.png
-1602,1602.jpg,3,26,False,D:\AIA_workspace\data\processed\cropped\1602_crop.png
-2091,2091.jpg,12,15,False,D:\AIA_workspace\data\processed\cropped\2091_crop.png
-2246,2246.jpg,16,17,False,D:\AIA_workspace\data\processed\cropped\2246_crop.png
-3174,3174.jpg,25,26,False,D:\AIA_workspace\data\processed\cropped\3174_crop.png
-3259,3259.jpg,27,16,False,D:\AIA_workspace\data\processed\cropped\3259_crop.png

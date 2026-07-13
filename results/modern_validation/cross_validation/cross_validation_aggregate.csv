@@ -1,2 +1,0 @@
-num_folds,mean_test_accuracy,std_test_accuracy,min_test_accuracy,max_test_accuracy
-5,0.982697777961001,0.005421142550015098,0.9738219895287958,0.9869109947643979
